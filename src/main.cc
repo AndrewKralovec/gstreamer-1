@@ -22,10 +22,58 @@
 #include <iostream>
 #include <stdlib.h>
 #include <gstreamermm/playbin.h>
+#include <string>
 
-int main()
+Glib::RefPtr<Glib::MainLoop> mainloop;
+Glib::RefPtr<Gst::Pipeline> pipeline;
+Glib::RefPtr<Gst::Element> element_source, element_filter, element_sink;
+Glib::RefPtr<Gst::Bus> bus;
+Glib::RefPtr<Gst::Message> msg;
+
+void print(std::string message); 
+
+int main(int argc, char** argv)
 {
-	std::cout << "Hello world!" << std::endl;
+	// Initialize Gstreamermm:
+	Gst::init(argc, argv);
+
+	// Create pipeline:
+	pipeline = Gst::Pipeline::create("pipeline");
+
+	// Create elements:
+	element_source = Gst::ElementFactory::create_element("fakesrc");
+	element_filter = Gst::ElementFactory::create_element("identity");
+	element_sink = Gst::ElementFactory::create_element("fakesink");
+
+	// We must add the elements to the pipeline before linking them:
+	try
+	{
+		pipeline->add(element_source)->add(element_filter)->add(element_sink);
+	}
+	catch (const std::runtime_error& ex)
+	{
+		std::cerr << "Exception while adding: " << ex.what() << std::endl;
+		return 1;
+	}
+
+	// Link the elements together:
+	try
+	{
+		element_source->link(element_filter)->link(element_sink);
+	}
+	catch(const std::runtime_error& error)
+	{
+		std::cerr << "Exception while linking: " << error.what() << std::endl;
+		return 1;
+	}
+	print("Start Playing"); 
+
 	return 0;
 }
+void print(std::string message){
+  std::cout << message << std::endl;
+}
+
+
+
 
